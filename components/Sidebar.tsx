@@ -7,14 +7,45 @@ interface SidebarProps {
   onSectionClick: (id: string) => void;
   bookmarks: Bookmark[];
   onToggleBookmark: (id: string) => void;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ sections, activeSectionId, onSectionClick, bookmarks, onToggleBookmark }) => {
+const SearchBar: React.FC<{ value: string; onChange: (value: string) => void }> = ({ value, onChange }) => (
+  <div className="relative mb-6">
+    <input
+      type="text"
+      placeholder="Search document..."
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full bg-base-light border border-border-color rounded-md py-2 pl-4 pr-10 text-sm text-text-primary placeholder-text-secondary focus:ring-2 focus:ring-accent-blue focus:border-accent-blue outline-none transition"
+    />
+    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+      {value ? (
+        <button onClick={() => onChange('')} className="text-text-secondary hover:text-text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      )}
+    </div>
+  </div>
+);
+
+
+const Sidebar: React.FC<SidebarProps> = ({ sections, activeSectionId, onSectionClick, bookmarks, onToggleBookmark, searchValue, onSearchChange }) => {
   return (
     <aside className="w-full lg:w-1/4 lg:sticky top-24 self-start pb-8 lg:pb-0">
+      <SearchBar value={searchValue} onChange={onSearchChange} />
       <nav className="space-y-6">
         <div>
-          <h3 className="px-3 text-xs font-semibold uppercase text-text-secondary tracking-wider">Contents</h3>
+          <h3 className="px-3 text-xs font-semibold uppercase text-text-secondary tracking-wider">
+            {searchValue ? `Results (${sections.length})` : 'Contents'}
+          </h3>
           <ul className="space-y-1 mt-2">
             {sections.map(section => (
               <li key={section.id}>
@@ -38,7 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sections, activeSectionId, onSectionC
             ))}
           </ul>
         </div>
-        {bookmarks.length > 0 && (
+        {bookmarks.length > 0 && !searchValue && (
           <div>
             <h3 className="px-3 text-xs font-semibold uppercase text-text-secondary tracking-wider">Bookmarks</h3>
             <ul className="space-y-1 mt-2">
