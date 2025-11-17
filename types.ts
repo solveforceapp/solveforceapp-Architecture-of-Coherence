@@ -1,4 +1,3 @@
-
 export type ContentItemType = 'heading' | 'paragraph' | 'list' | 'code' | 'table' | 'equation';
 
 export interface ContentItem {
@@ -14,4 +13,9 @@ export interface Section {
   id: string;
   title: string;
   content: ContentItem[];
+}
+
+export interface Bookmark {
+  id: string;
+  title: string;
 }

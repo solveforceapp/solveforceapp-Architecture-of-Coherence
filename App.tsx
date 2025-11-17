@@ -1,14 +1,33 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { DOCUMENT_CONTENT } from './constants';
 import Sidebar from './components/Sidebar';
 import ContentArea from './components/ContentArea';
-import type { Section } from './types';
+import type { Section, Bookmark } from './types';
 
 const App: React.FC = () => {
   const [activeSectionId, setActiveSectionId] = useState<string>(DOCUMENT_CONTENT[0]?.id || '');
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<Record<string, HTMLElement>>({});
+
+  useEffect(() => {
+    try {
+        const savedBookmarks = localStorage.getItem('coherence-bookmarks');
+        if (savedBookmarks) {
+            setBookmarks(JSON.parse(savedBookmarks));
+        }
+    } catch (error) {
+        console.error("Failed to load bookmarks from localStorage", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+        localStorage.setItem('coherence-bookmarks', JSON.stringify(bookmarks));
+    } catch (error) {
+        console.error("Failed to save bookmarks to localStorage", error);
+    }
+  }, [bookmarks]);
 
   const handleScroll = useCallback(() => {
     const scrollPosition = contentRef.current?.scrollTop || 0;
@@ -51,6 +70,21 @@ const App: React.FC = () => {
     }
   };
 
+  const toggleBookmark = (sectionId: string) => {
+    setBookmarks(prevBookmarks => {
+        const existingBookmarkIndex = prevBookmarks.findIndex(b => b.id === sectionId);
+        if (existingBookmarkIndex > -1) {
+            return prevBookmarks.filter(b => b.id !== sectionId);
+        } else {
+            const section = DOCUMENT_CONTENT.find(s => s.id === sectionId);
+            if (section) {
+                return [...prevBookmarks, { id: section.id, title: section.title }];
+            }
+        }
+        return prevBookmarks;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-base-dark font-sans text-text-primary">
       <header className="fixed top-0 left-0 right-0 bg-base-light/80 backdrop-blur-md border-b border-border-color z-20">
@@ -67,14 +101,21 @@ const App: React.FC = () => {
           <Sidebar 
             sections={DOCUMENT_CONTENT} 
             activeSectionId={activeSectionId} 
-            onSectionClick={handleSectionClick} 
+            onSectionClick={handleSectionClick}
+            bookmarks={bookmarks}
+            onToggleBookmark={toggleBookmark}
           />
           <main 
             ref={contentRef} 
             className="w-full lg:w-3/4 lg:pl-8 overflow-y-auto" 
             style={{ height: 'calc(100vh - 6rem)' }}
           >
-            <ContentArea sections={DOCUMENT_CONTENT} registerRef={registerRef} />
+            <ContentArea 
+                sections={DOCUMENT_CONTENT} 
+                registerRef={registerRef} 
+                bookmarks={bookmarks.map(b => b.id)}
+                onToggleBookmark={toggleBookmark}
+            />
           </main>
         </div>
       </div>

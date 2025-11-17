@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Section, ContentItem, ContentItemType } from '../types';
+import type { Section, ContentItem } from '../types';
 
 const formatText = (text: string = ''): React.ReactNode => {
     const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g);
@@ -71,24 +71,45 @@ const ContentRenderer: React.FC<{ item: ContentItem }> = ({ item }) => {
 interface ContentAreaProps {
   sections: Section[];
   registerRef: (id: string, element: HTMLElement | null) => void;
+  bookmarks: string[];
+  onToggleBookmark: (id: string) => void;
 }
 
-const ContentArea: React.FC<ContentAreaProps> = ({ sections, registerRef }) => {
+const ContentArea: React.FC<ContentAreaProps> = ({ sections, registerRef, bookmarks, onToggleBookmark }) => {
   return (
     <div className="prose prose-invert max-w-none">
-      {sections.map(section => (
-        <section
-          key={section.id}
-          id={section.id}
-          ref={el => registerRef(section.id, el)}
-          className="mb-12 scroll-mt-24"
-        >
-          <h2 className="text-3xl font-bold mb-4 text-text-primary border-b-2 border-accent-blue pb-2">{section.title}</h2>
-          {section.content.map((item, index) => (
-            <ContentRenderer key={index} item={item} />
-          ))}
-        </section>
-      ))}
+      {sections.map(section => {
+        const isBookmarked = bookmarks.includes(section.id);
+        return (
+          <section
+            key={section.id}
+            id={section.id}
+            ref={el => registerRef(section.id, el)}
+            className="mb-12 scroll-mt-24 group relative"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-3xl font-bold mb-4 text-text-primary border-b-2 border-accent-blue pb-2 flex-grow">{section.title}</h2>
+              <button
+                onClick={() => onToggleBookmark(section.id)}
+                title={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+                className={`p-2 rounded-full transition-all duration-200 mb-4 ${
+                  isBookmarked 
+                    ? 'text-accent-blue opacity-100' 
+                    : 'text-text-secondary opacity-0 group-hover:opacity-100 hover:bg-base-light focus:opacity-100'
+                }`}
+                aria-label={isBookmarked ? `Remove bookmark for ${section.title}` : `Add bookmark for ${section.title}`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill={isBookmarked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              </button>
+            </div>
+            {section.content.map((item, index) => (
+              <ContentRenderer key={index} item={item} />
+            ))}
+          </section>
+        )
+      })}
     </div>
   );
 };
